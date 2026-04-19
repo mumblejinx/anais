@@ -1,0 +1,85 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Global user state and progression metrics",
+      "type": "object",
+      "properties": {
+        "xp": { "type": "number" },
+        "lvl": { "type": "number" },
+        "soulResonance": { "type": "number" },
+        "stoicEquilibrium": { "type": "number" },
+        "poeticResonance": { "type": "number" },
+        "subconsciousDepth": { "type": "number" },
+        "lastUpdated": { "type": "string", "format": "date-time" }
+      },
+      "required": ["xp", "lvl"]
+    },
+    "Memory": {
+      "title": "Archived Memory",
+      "description": "Historical system recollections",
+      "type": "object",
+      "properties": {
+        "timestamp": { "type": "string" },
+        "text": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["timestamp", "text"]
+    },
+    "Log": {
+      "title": "System Log",
+      "description": "Dynamic logs for the live data stream",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "enum": ["SYS", "LOG", "WEB", "APP", "ERROR"] },
+        "content": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["type", "content"]
+    },
+    "Artifact": {
+      "title": "Inventory Artifact",
+      "description": "Collected items and fragments",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "enum": ["book", "key", "pen", "locked"] },
+        "name": { "type": "string" },
+        "collectedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["type"]
+    },
+    "SyncEntry": {
+      "title": "Sync Truth",
+      "description": "Truths submitted to the Inner World matrix",
+      "type": "object",
+      "properties": {
+        "truth": { "type": "string" },
+        "impact": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["truth"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Root user profile"
+    },
+    "/users/{userId}/memories/{memoryId}": {
+      "schema": "Memory",
+      "description": "Linked memories for the user"
+    },
+    "/users/{userId}/logs/{logId}": {
+      "schema": "Log",
+      "description": "Linked system logs"
+    },
+    "/users/{userId}/artifacts/{artifactId}": {
+      "schema": "Artifact",
+      "description": "Linked artifacts"
+    },
+    "/users/{userId}/sync_entries/{entryId}": {
+      "schema": "SyncEntry",
+      "description": "Linked sync entries"
+    }
+  }
+}

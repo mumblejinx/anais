@@ -1,0 +1,94 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800&display=swap');
+
+@theme {
+  --color-background: #0e0e0e;
+  --color-surface: #0e0e0e;
+  --color-surface-container: #191919;
+  --color-surface-container-low: #131313;
+  --color-surface-container-high: #1f1f1f;
+  --color-surface-container-highest: #262626;
+  --color-surface-container-lowest: #000000;
+  
+  --color-primary: #9cff93;
+  --color-on-primary: #006413;
+  
+  --color-secondary: #c97cff;
+  --color-on-secondary: #350056;
+  
+  --color-tertiary: #ffe792;
+  --color-on-tertiary: #655400;
+  
+  --color-error: #ff7351;
+  --color-on-error: #450900;
+  
+  --color-outline: #757575;
+  --color-outline-variant: #484848;
+
+  --font-sans: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-headline: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-label: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer utilities {
+  .pixel-border-primary {
+    box-shadow: 
+      0 -4px 0 0 #9cff93,
+      0 4px 0 0 #9cff93,
+      -4px 0 0 0 #9cff93,
+      4px 0 0 0 #9cff93;
+  }
+  
+  .pixel-border-secondary {
+    box-shadow: 
+      0 -4px 0 0 #c97cff,
+      0 4px 0 0 #c97cff,
+      -4px 0 0 0 #c97cff,
+      4px 0 0 0 #c97cff;
+  }
+  
+  .pixel-border-tertiary {
+    box-shadow: 
+      0 -4px 0 0 #ffe792,
+      0 4px 0 0 #ffe792,
+      -4px 0 0 0 #ffe792,
+      4px 0 0 0 #ffe792;
+  }
+
+  .pixel-border-inner-primary {
+    box-shadow: inset 0 0 0 2px #9cff93;
+  }
+
+  .scanline {
+    background: linear-gradient(
+      to bottom,
+      rgba(156, 255, 147, 0.03) 50%,
+      rgba(0, 0, 0, 0) 50%
+    );
+    background-size: 100% 4px;
+    pointer-events: none;
+  }
+
+  .crt-glow {
+    text-shadow: 0 0 8px rgba(156, 255, 147, 0.6);
+  }
+
+  .crt-glow-secondary {
+    text-shadow: 0 0 8px rgba(201, 124, 255, 0.6);
+  }
+
+  .glass-panel {
+    background: rgba(25, 25, 25, 0.4);
+    backdrop-filter: blur(12px);
+  }
+}
+
+@keyframes scan {
+  from { transform: translateY(-100%); }
+  to { transform: translateY(100%); }
+}
+
+.animate-scan {
+  animation: scan 8s linear infinite;
+}
