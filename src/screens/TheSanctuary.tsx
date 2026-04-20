@@ -1,190 +1,247 @@
-import { ShieldAlert, ChartLine, Users, Terminal as TerminalIcon, ShieldX, Phone, Bolt, Image as ImageIcon } from 'lucide-react';
-import { motion } from 'motion/react';
+import React from 'react';
+import { ShieldAlert, Users, Terminal as TerminalIcon, Wind, LifeBuoy, Zap } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { useState, useEffect } from 'react';
+import { useFirebase } from '../components/FirebaseProvider';
+import { db, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, limit } from '../lib/firebase';
+import { toast } from 'sonner';
 
 export default function TheSanctuary() {
+  const { user, profile, rewardXP } = useFirebase();
+  const [entry, setEntry] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [memories, setMemories] = useState<any[]>([]);
+  const [activeExercise, setActiveExercise] = useState<'none' | 'breathing' | 'grounding' | 'ifs'>('none');
+  const [selectedPart, setSelectedPart] = useState<any>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    const q = query(collection(db, 'users', user.uid, 'memories'), orderBy('createdAt', 'desc'), limit(10));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setMemories(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
+    return () => unsubscribe();
+  }, [user]);
+
+  const handleTerminalSubmit = async (e: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!user || !entry.trim() || isSubmitting) return;
+
+    setIsSubmitting(true);
+    try {
+      await addDoc(collection(db, 'users', user.uid, 'memories'), {
+        text: entry.trim(),
+        createdAt: serverTimestamp()
+      });
+      await addDoc(collection(db, 'users', user.uid, 'logs'), {
+        type: 'LOG',
+        content: `Sanctuary_Grounding: Neural_Entry_Secured`,
+        createdAt: serverTimestamp()
+      });
+      await rewardXP(80, 40);
+      setEntry('');
+      toast.success("MEMORY_ARCHIVED");
+    } catch (err) {
+      toast.error("COMMIT_FAILED");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const ifsParts = [
+    { id: 'protector', name: 'The Protector', goal: 'Shielding the core from perceived threats.', role: 'Caretaker' },
+    { id: 'exile', name: 'The Exile', goal: 'Stored emotional fragments awaiting integration.', role: 'Vulnerable' },
+    { id: 'firefighter', name: 'The Firefighter', goal: 'Immediate suppression of visceral spikes.', role: 'Crisis_Response' },
+  ];
+
   return (
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="relative flex flex-col gap-12 pb-32"
+      className="flex flex-col gap-12 pb-32"
     >
-      {/* CRT Scanline Effect layer (local to screen) */}
-      <div className="fixed inset-0 scanline z-10 pointer-events-none opacity-10"></div>
-
-      {/* Hero Section: Sanctuary Entry */}
-      <div className="flex flex-col items-center justify-center text-center">
-        <div className="pixel-border-tertiary p-10 glass-panel inline-block relative overflow-hidden mb-8">
-          <div className="absolute inset-0 bg-tertiary/5"></div>
-          <ShieldAlert className="w-16 h-16 text-tertiary mb-6 mx-auto fill-tertiary/20" />
-          <h2 className="text-5xl md:text-7xl font-bold tracking-tighter uppercase mb-2">The Sanctuary</h2>
-          <p className="text-primary font-label tracking-widest text-sm opacity-80 uppercase font-bold">STATION_004 // SAFE_ZONE_ESTABLISHED</p>
-        </div>
+      <div className="text-center space-y-4">
+         <h2 className="text-6xl font-bold uppercase tracking-tighter text-primary">The Sanctuary</h2>
+         <p className="text-[10px] font-mono tracking-[0.5em] text-on-surface-variant uppercase">Safe_Zone_Established // Node_004</p>
       </div>
 
-      {/* Main Layout Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 relative z-20">
-        {/* Left Column: Stoic Equilibrium & IFS Work */}
-        <div className="lg:col-span-4 space-y-8">
-          <div className="pixel-border-primary p-6 glass-panel">
-            <h3 className="font-bold text-lg text-primary uppercase mb-8 flex items-center gap-2 tracking-widest">
-              <ChartLine className="w-5 h-5" />
-              Stoic Equilibrium
-            </h3>
-            <div className="space-y-8">
-              {[
-                { label: 'Pulse Variance', val: 62, color: 'bg-primary' },
-                { label: 'Neural Calm', val: 89, color: 'bg-primary' },
-                { label: 'Stoic Threshold', val: 100, color: 'bg-tertiary', status: 'STABLE' },
-              ].map((m) => (
-                <div key={m.label}>
-                  <div className="flex justify-between mb-2 text-[10px] font-bold uppercase text-on-surface-variant tracking-widest">
-                    <span>{m.label}</span>
-                    <span className={m.color.replace('bg-', 'text-')}>{m.status || `${m.val}%`}</span>
-                  </div>
-                  <div className="h-4 bg-surface-container-highest w-full border-2 border-primary/20 p-0.5">
-                    <div className={`h-full ${m.color}`} style={{ width: `${m.val}%` }}></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="mt-10 p-5 bg-primary/10 border border-primary/30 relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-1 opacity-20">
-                <ShieldAlert className="w-8 h-8 text-primary" />
-              </div>
-              <p className="text-xs italic text-primary leading-relaxed relative z-10">
-                "You have power over your mind - not outside events. Realize this, and you will find strength."
-              </p>
-            </div>
-          </div>
-
-          <div className="pixel-border-secondary p-6 glass-panel">
-            <h3 className="font-bold text-lg text-secondary uppercase mb-6 flex items-center gap-2 tracking-widest">
-              <Users className="w-5 h-5" />
-              IFS Work
-            </h3>
-            <ul className="space-y-3">
-              {[
-                { label: 'The Protector', status: '(Active)', active: true, icon: 'ShieldCheck' },
-                { label: 'The Exile', status: '(Dormant)', active: false, icon: 'Baby' },
-                { label: 'The Firefighter', status: '(Ready)', active: false, icon: 'Flame' },
-              ].map((item) => (
-                <li 
-                  key={item.label}
-                  className={`flex items-center justify-between p-4 bg-surface-container-low hover:bg-surface-container-high cursor-pointer transition-all border-l-4 ${item.active ? 'border-secondary' : 'border-outline-variant/30 opacity-60'}`}
-                >
-                  <span className="text-sm font-medium">{item.label} <span className="text-[10px] opacity-60 ml-1">{item.status}</span></span>
-                  <div className={item.active ? 'text-secondary' : 'text-on-surface-variant'}>
-                    <ShieldAlert className="w-4 h-4" />
-                  </div>
-                </li>
-              ))}
-            </ul>
-            <button className="w-full mt-6 py-4 border-2 border-secondary text-secondary font-bold uppercase tracking-widest hover:bg-secondary hover:text-surface transition-all active:scale-95 cursor-pointer text-xs">
-              Begin Session
-            </button>
-          </div>
-        </div>
-
-        {/* Right Column: Interactive Terminal */}
-        <div className="lg:col-span-8 space-y-8">
-          <div className="pixel-border-tertiary glass-panel flex flex-col min-h-[520px]">
-            <div className="bg-tertiary text-surface px-6 py-3 flex justify-between items-center">
-              <span className="font-bold text-xs tracking-[0.2em] uppercase">Offline Introspection Terminal</span>
-              <div className="flex gap-2">
-                <div className="w-3 h-3 bg-surface"></div>
-                <div className="w-3 h-3 bg-surface"></div>
-              </div>
-            </div>
-            <div className="flex-grow p-8 font-mono text-sm space-y-6 overflow-y-auto">
-              <div className="text-tertiary font-bold tracking-widest">/ ACCESSING_PROTECTIVE_LAYER...</div>
-              <div className="text-on-surface">System identifies current emotional state as: <span className="text-primary font-bold">[RECEPTIVE]</span></div>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+        {/* Left: Exercises */}
+        <aside className="lg:col-span-4 space-y-8">
+           <div className="glass-panel p-8 border-t-8 border-primary">
+              <h3 className="text-xs font-bold uppercase tracking-widest text-primary mb-6 flex items-center gap-2">
+                <Wind className="w-4 h-4" /> Stoic_Equilibrium
+              </h3>
               
-              <div className="bg-surface-container-highest p-8 border-l-4 border-tertiary my-8 relative group">
-                <div className="absolute top-0 right-0 p-2 opacity-5">
-                  <TerminalIcon className="w-24 h-24" />
+              {activeExercise === 'breathing' ? (
+                <div className="flex flex-col items-center py-6">
+                   <motion.div 
+                    animate={{ scale: [1, 1.5, 1] }}
+                    transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+                    className="w-32 h-32 rounded-full bg-primary/20 border-4 border-primary flex items-center justify-center shadow-[0_0_20px_rgba(var(--primary),0.2)]"
+                   >
+                     <span className="text-[10px] font-bold text-primary">BREATHE</span>
+                   </motion.div>
+                   <button 
+                    onClick={() => setActiveExercise('none')}
+                    className="mt-8 text-[10px] font-bold uppercase underline opacity-60 hover:opacity-100"
+                   >
+                     End_Calibration
+                   </button>
                 </div>
-                <p className="text-xl text-on-surface mb-6 leading-relaxed italic">
-                  "I am restless. Things are calling me away. My life is an effort to hold when I should let go. My life is a series of escapes."
-                </p>
-                <cite className="text-tertiary opacity-80 font-bold not-italic tracking-widest text-[11px]">— ANAÏS NIN, DIARIES</cite>
-              </div>
-
-              <div className="flex items-start gap-4 pt-4">
-                <span className="text-primary font-black text-xl animate-pulse">&gt;</span>
-                <div className="flex-grow">
-                  <input 
-                    className="w-full bg-transparent border-none focus:ring-0 p-0 text-primary placeholder-primary/20 text-lg outline-none" 
-                    placeholder="Awaiting manual entry..." 
-                    type="text"
-                  />
+              ) : (
+                <div className="space-y-4">
+                  <p className="text-xs opacity-60 italic">Standardized pulse variance detected. Initiate breath calibration for neural stability.</p>
+                  <button 
+                    onClick={() => setActiveExercise('breathing')}
+                    className="w-full py-4 bg-primary text-on-primary font-bold uppercase text-[10px] tracking-widest hover:brightness-110 transition-all shadow-lg active:scale-95"
+                  >
+                    Start_Breath_Matrix
+                  </button>
                 </div>
+              )}
+           </div>
+
+           <div className="glass-panel p-8 border-t-8 border-secondary">
+              <h3 className="text-xs font-bold uppercase tracking-widest text-secondary mb-6 flex items-center gap-2">
+                <Users className="w-4 h-4" /> IFS_Work_Center
+              </h3>
+              
+              <div className="space-y-3">
+                {ifsParts.map(part => (
+                  <button 
+                    key={part.id}
+                    onClick={() => setSelectedPart(part)}
+                    className={`w-full p-4 border text-left transition-all ${selectedPart?.id === part.id ? 'bg-secondary text-on-secondary border-secondary' : 'bg-surface-container-low border-outline-variant hover:border-secondary'}`}
+                  >
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-xs font-bold uppercase tracking-widest">{part.name}</span>
+                      <span className="text-[10px] opacity-40">[{part.role}]</span>
+                    </div>
+                    {selectedPart?.id === part.id && (
+                      <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-[10px] leading-relaxed mt-2 italic">
+                        "{part.goal}"
+                      </motion.p>
+                    )}
+                  </button>
+                ))}
               </div>
-            </div>
-            
-            <div className="p-6 border-t-2 border-tertiary/10 grid grid-cols-2 md:grid-cols-4 gap-4 bg-surface-container-low/50">
-              {['Unblend Part', 'Check Compassion', 'View History', 'Export Logs'].map((label) => (
-                <button 
-                  key={label}
-                  className="py-3 bg-surface-container-low border border-tertiary/20 hover:bg-tertiary hover:text-surface transition-all uppercase text-[10px] font-bold tracking-widest cursor-pointer active:scale-95"
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
+           </div>
+        </aside>
 
-          {/* Crisis Protocol Triggers */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <button className="bg-error/10 border-2 border-error p-8 flex flex-col items-center text-center cursor-pointer hover:bg-error/20 transition-all active:scale-95 group">
-              <ShieldX className="text-error w-10 h-10 mb-4 group-hover:scale-110 transition-transform" />
-              <h4 className="font-bold text-error uppercase text-xs tracking-widest mb-1">Total Reset</h4>
-              <p className="text-[10px] text-error/70 uppercase font-medium">Execute immediate grounding sequence</p>
-            </button>
-            <button className="bg-error/5 border-2 border-error/40 p-8 flex flex-col items-center text-center cursor-pointer hover:bg-error/15 transition-all active:scale-95 group">
-              <Phone className="text-error w-10 h-10 mb-4 group-hover:scale-110 transition-transform" />
-              <h4 className="font-bold text-error uppercase text-xs tracking-widest mb-1">External Link</h4>
-              <p className="text-[10px] text-error/70 uppercase font-medium">Connect to support node</p>
-            </button>
-            <button className="bg-error/5 border-2 border-error/40 p-8 flex flex-col items-center text-center cursor-pointer hover:bg-error/15 transition-all active:scale-95 group">
-              <Bolt className="text-error w-10 h-10 mb-4 group-hover:scale-110 transition-transform" />
-              <h4 className="font-bold text-error uppercase text-xs tracking-widest mb-1">Flash Calm</h4>
-              <p className="text-[10px] text-error/70 uppercase font-medium">High-intensity focus drill</p>
-            </button>
-          </div>
-        </div>
-      </div>
+        {/* Center: Interaction */}
+        <main className="lg:col-span-8 flex flex-col gap-8">
+           <div className="flex-grow glass-panel border-4 border-surface-container-highest flex flex-col min-h-[500px]">
+              <div className="bg-surface-container-highest p-4 border-b border-outline-variant flex justify-between items-center">
+                 <div className="flex gap-2">
+                   <div className="w-2 h-2 bg-primary"></div>
+                   <div className="w-2 h-2 bg-secondary"></div>
+                   <div className="w-2 h-2 bg-tertiary"></div>
+                 </div>
+                 <span className="text-[10px] font-mono opacity-40 uppercase">Static_Terminal // Introspective_Mode</span>
+              </div>
+              
+              <div className="flex-grow p-10 flex flex-col relative overflow-hidden">
+                <div className="scanline absolute inset-0 opacity-5 pointer-events-none"></div>
+                <div className="relative z-10 flex-grow">
+                   {activeExercise === 'grounding' ? (
+                     <div className="space-y-8 max-w-xl">
+                        <h4 className="text-2xl font-bold text-error uppercase italic tracking-tighter">Grounding_Sequence_Active</h4>
+                        <div className="space-y-4 text-sm font-mono opacity-80">
+                           <p>&gt; Identify 5 things you can see...</p>
+                           <p>&gt; Identify 4 things you can touch...</p>
+                           <p>&gt; Identify 3 things you can hear...</p>
+                           <p>&gt; Identify 2 things you can smell...</p>
+                           <p>&gt; Identify 1 thing you can taste...</p>
+                        </div>
+                        <button 
+                          onClick={() => setActiveExercise('none')}
+                          className="px-8 py-3 bg-error text-white font-bold uppercase text-[10px] tracking-widest shadow-lg active:scale-95"
+                        >
+                          Protocol_Complete
+                        </button>
+                     </div>
+                   ) : (
+                     <div className="flex flex-col h-full">
+                        <div className="mb-10 opacity-60 font-body leading-loose italic text-xl">
+                          "I am restless. Things are calling me away. My body is a cage, but my mind is a sanctuary of infinite doors."
+                        </div>
+                        <form onSubmit={handleTerminalSubmit} className="flex-grow flex flex-col">
+                          <textarea 
+                            value={entry}
+                            onChange={(e) => setEntry(e.target.value)}
+                            placeholder="Scribe your internal landscape..."
+                            className="w-full h-full bg-transparent border-none focus:ring-0 p-0 text-xl font-body outline-none resize-none"
+                          />
+                        </form>
+                     </div>
+                   )}
+                </div>
+                
+                {(!activeExercise || activeExercise === 'none') && (
+                  <div className="flex justify-between items-end mt-10">
+                    <div className="flex flex-col gap-2">
+                      <span className="text-[10px] font-bold uppercase opacity-30">Archive_Status</span>
+                      <div className="flex gap-1">
+                        {memories.slice(0, 5).map(m => <div key={m.id} className="w-4 h-1 bg-primary"></div>)}
+                      </div>
+                    </div>
+                    <button 
+                      onClick={(e) => handleTerminalSubmit(e as any)}
+                      disabled={isSubmitting || !entry.trim()}
+                      className="px-10 py-4 bg-tertiary text-on-tertiary font-bold uppercase tracking-widest text-[10px] hover:brightness-110 active:scale-95 transition-all disabled:opacity-30 shadow-lg"
+                    >
+                      Commit_Fragment
+                    </button>
+                  </div>
+                )}
+              </div>
+           </div>
 
-      {/* Visual Artifacts */}
-      <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-12 relative z-20">
-        <div className="relative group overflow-hidden">
-          <div className="absolute -inset-1 bg-primary/20 blur opacity-0 group-hover:opacity-100 transition duration-700"></div>
-          <img 
-            className="relative w-full h-80 object-cover pixel-border-primary grayscale hover:grayscale-0 transition-all duration-700 brightness-75 group-hover:brightness-110" 
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDslWj77HLEti7WrRmsv1B5C35cr-GnnqfGwgESAmufzxqHMtorLLHDT_fVq_JcyLstzzbEbvNGOkoArF7_Gx2WKpmkjPhPj6LH64S7vVIEBj7YjlAg5kz3_jAQVME76ZlL2d4LroWeeHaDEOSO3GfEwB5bnhJOnumRtAh__HsUgDWVi594sFLTq8qvVUKC-tvqcZcej71GwO9a5cZlRjEtw59keMZU6_wM34_P_u6M3H0UCw_nv1kMpLMsQGuJz3oLzsBPS1Fp4OAg"
-            alt="fragment"
-            referrerPolicy="no-referrer"
-          />
-          <div className="absolute bottom-6 left-6 bg-surface p-1 border-2 border-primary">
-            <div className="bg-primary/10 px-4 py-2 border border-primary/30">
-              <span className="text-primary font-bold text-[10px] uppercase tracking-[0.2em]">Memory_Fragment_09.log</span>
-            </div>
-          </div>
-        </div>
-        
-        <div className="relative group overflow-hidden">
-          <div className="absolute -inset-1 bg-secondary/20 blur opacity-0 group-hover:opacity-100 transition duration-700"></div>
-          <img 
-            className="relative w-full h-80 object-cover pixel-border-secondary grayscale hover:grayscale-0 transition-all duration-700 brightness-75 group-hover:brightness-110" 
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDtp6x8-DMGRKor5z9OxBjQuned-Do-PVEK5gv9Jr8xxZuhm9Vm7vBA3p23I5srhB7cmivDcRQNCl2wb6dA8gM8hfiGG0Vac6alupWg0GF-9ThYODPWZX-2uJfphcDurUR23GBJdhlBsHKM_PZwrXSY2bTW5F60qe1qNw8QfG2Rt29Vzr5h52A0NWF7eFCnqmUwWBDYdvm82RpEAFPyPIsbwLkKgfDP1o13PRJ9gEF_xqM81Md3xSgl5VdxttS-hcGodceTY-yxk1aC"
-            alt="landscape"
-            referrerPolicy="no-referrer"
-          />
-          <div className="absolute bottom-6 left-6 bg-surface p-1 border-2 border-secondary">
-            <div className="bg-secondary/10 px-4 py-2 border border-secondary/30">
-              <span className="text-secondary font-bold text-[10px] uppercase tracking-[0.2em]">Internal_Landscape_v4.px</span>
-            </div>
-          </div>
-        </div>
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <button 
+                onClick={() => setActiveExercise('grounding')}
+                className="p-8 border-2 border-error/40 bg-error/5 flex flex-col items-center gap-4 hover:bg-error/10 transition-all group shadow-sm"
+              >
+                <ShieldAlert className="w-8 h-8 text-error group-hover:scale-110 transition-transform" />
+                <div className="text-center">
+                  <h5 className="text-xs font-bold uppercase text-error mb-1">Total_Reset</h5>
+                  <p className="text-[10px] uppercase opacity-40 text-error/60">Grounding Sequence</p>
+                </div>
+              </button>
+              
+              <a 
+                href="https://www.crisistextline.org/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-8 border-2 border-secondary/40 bg-secondary/5 flex flex-col items-center gap-4 hover:bg-secondary/10 transition-all group shadow-sm no-underline"
+              >
+                <LifeBuoy className="w-8 h-8 text-secondary group-hover:scale-110 transition-transform" />
+                <div className="text-center">
+                  <h5 className="text-xs font-bold uppercase text-secondary mb-1">Support_Beacon</h5>
+                  <p className="text-[10px] uppercase opacity-40 text-secondary/60">External Nodes</p>
+                </div>
+              </a>
+
+              <button 
+                onClick={() => {
+                  const quotes = [
+                    "Waste no more time arguing what a good man should be. Be one.",
+                    "If it is not right, do not do it; if it is not true, do not say it.",
+                    "The best revenge is to be unlike him who performed the injury."
+                  ];
+                  toast.info(`STOIC_REFLECT: "${quotes[Math.floor(Math.random() * quotes.length)]}"`);
+                }}
+                className="p-8 border-2 border-primary/40 bg-primary/5 flex flex-col items-center gap-4 hover:bg-primary/10 transition-all group shadow-sm"
+              >
+                <Zap className="w-8 h-8 text-primary group-hover:scale-110 transition-transform" />
+                <div className="text-center">
+                  <h5 className="text-xs font-bold uppercase text-primary mb-1">Flash_Calm</h5>
+                  <p className="text-[10px] uppercase opacity-40 text-primary/60">Rapid Reflection</p>
+                </div>
+              </button>
+           </div>
+        </main>
       </div>
     </motion.div>
   );

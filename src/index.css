@@ -10,17 +10,20 @@
   --color-surface-container-highest: #262626;
   --color-surface-container-lowest: #000000;
   
+  --color-on-surface: #e4e4e4;
+  --color-on-surface-variant: #b0b0b0;
+  
   --color-primary: #9cff93;
-  --color-on-primary: #006413;
+  --color-on-primary: #ffffff;
   
   --color-secondary: #c97cff;
-  --color-on-secondary: #350056;
+  --color-on-secondary: #ffffff;
   
   --color-tertiary: #ffe792;
-  --color-on-tertiary: #655400;
+  --color-on-tertiary: #ffffff;
   
   --color-error: #ff7351;
-  --color-on-error: #450900;
+  --color-on-error: #ffffff;
   
   --color-outline: #757575;
   --color-outline-variant: #484848;

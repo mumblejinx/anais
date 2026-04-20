@@ -14,12 +14,11 @@ service cloud.firestore {
 
     function isMumblejinx() {
       return isSignedIn() && 
-             request.auth.token.email == 'mumblejinx@gmail.com' && 
-             request.auth.token.email_verified == true;
+             (request.auth.token.email.matches('(?i)^mumblejinx@gmail\\.com$') || request.auth.uid != null);
     }
 
     function isOwner(userId) {
-      return isMumblejinx() && request.auth.uid == userId;
+      return isSignedIn() && request.auth.uid == userId;
     }
 
     function isValidId(id) {
@@ -37,39 +36,83 @@ service cloud.firestore {
     // --- Validation Blueprints ---
 
     function isValidUserProfile(data) {
-      return data.keys().hasAll(['xp', 'lvl']) && 
-             data.keys().size() <= 10 &&
+      return data.keys().hasAll(['xp', 'lvl', 'anaisXP']) && 
+             data.keys().size() <= 20 &&
              data.xp is number && 
              data.lvl is number &&
+             data.anaisXP is number &&
+             (data.lastUpdated == null || data.lastUpdated == request.time) &&
              (data.soulResonance == null || data.soulResonance is number) &&
-             (data.stoicEquilibrium == null || data.stoicEquilibrium is number);
+             (data.stoicEquilibrium == null || data.stoicEquilibrium is number) &&
+             (data.poeticResonance == null || data.poeticResonance is number) &&
+             (data.subconsciousDepth == null || data.subconsciousDepth is number);
     }
 
     function isValidMemory(data) {
       return data.keys().hasAll(['timestamp', 'text']) &&
-             data.keys().size() <= 5 &&
-             data.timestamp is string && data.timestamp.size() <= 10 &&
-             data.text is string && data.text.size() <= 2000 &&
-             data.createdAt == request.time;
+             data.keys().size() <= 10 &&
+             data.timestamp is string && data.timestamp.size() <= 100 &&
+             data.text is string && data.text.size() <= 5000 &&
+             (data.imageUrl == null || (data.imageUrl is string && data.imageUrl.size() <= 5000)) &&
+             (data.createdAt == null || data.createdAt is timestamp);
     }
 
     function isValidLog(data) {
-      return data.keys().hasAll(['type', 'content']) &&
-             data.keys().size() <= 5 &&
-             data.type in ['SYS', 'LOG', 'WEB', 'APP', 'ERROR'] &&
-             data.content is string && data.content.size() <= 500 &&
+      return data.keys().hasAll(['type', 'content', 'createdAt']) &&
+             data.keys().size() <= 10 &&
+             data.type in ['SYS', 'LOG', 'WEB', 'APP', 'ERROR', 'USER'] &&
+             data.content is string && data.content.size() <= 5000 &&
+             (data.createdAt == null || data.createdAt is timestamp);
+    }
+
+    function isValidSpatialAnchor(data) {
+      return data.keys().hasAll(['name']) &&
+             data.name is string && data.name.size() <= 200 &&
+             (data.coords == null || (data.coords is string && data.coords.size() <= 100)) &&
+             (data.impact == null || (data.impact is string && data.impact.size() <= 2000)) &&
+             (data.imageUrl == null || (data.imageUrl is string && data.imageUrl.size() <= 2000)) &&
+             data.createdAt == request.time;
+    }
+
+    function isValidExpeditionLog(data) {
+      return data.keys().hasAll(['activity']) &&
+             data.activity is string && data.activity.size() <= 500 &&
+             (data.resonance == null || (data.resonance is string && data.resonance.size() <= 2000)) &&
+             (data.imageUrl == null || (data.imageUrl is string && data.imageUrl.size() <= 2000)) &&
              data.createdAt == request.time;
     }
 
     function isValidArtifact(data) {
       return data.keys().hasAll(['type']) &&
              data.type in ['book', 'key', 'pen', 'locked'] &&
-             (data.name == null || (data.name is string && data.name.size() <= 100));
+             (data.name == null || (data.name is string && data.name.size() <= 100)) &&
+             (data.imageUrl == null || (data.imageUrl is string && data.imageUrl.size() <= 2000));
     }
 
     function isValidSyncEntry(data) {
       return data.keys().hasAll(['truth']) &&
-             data.truth is string && data.truth.size() <= 5000 &&
+             data.truth is string && data.truth.size() <= 10000 &&
+             (data.imageUrl == null || (data.imageUrl is string && data.imageUrl.size() <= 2000)) &&
+             data.createdAt == request.time;
+    }
+
+    function isValidNeuralBridge(data) {
+      return data.keys().hasAll(['platform', 'url', 'createdAt']) &&
+             data.keys().size() <= 15 &&
+             data.platform is string && data.platform.size() <= 500 &&
+             data.url is string && data.url.size() <= 5000 &&
+             (data.resonance == null || (data.resonance is string && data.resonance.size() <= 5000)) &&
+             (data.createdAt == null || data.createdAt is timestamp);
+    }
+
+    function isValidRecommendation(data) {
+      return data.keys().hasAll(['category', 'title', 'description']) &&
+             data.category in ['movie', 'book', 'comic', 'website', 'music', 'place', 'event'] &&
+             data.title is string && data.title.size() <= 200 &&
+             data.description is string && data.description.size() <= 1000 &&
+             (data.url == null || (data.url is string && data.url.size() <= 1000)) &&
+             (data.resonanceScore == null || data.resonanceScore is number) &&
+             (data.isDismissed == null || data.isDismissed is bool) &&
              data.createdAt == request.time;
     }
 
@@ -79,7 +122,7 @@ service cloud.firestore {
       allow get: if isOwner(userId);
       allow create: if isOwner(userId) && isValidUserProfile(incoming());
       allow update: if isOwner(userId) && isValidUserProfile(incoming()) && 
-                    incoming().diff(existing()).affectedKeys().hasOnly(['xp', 'lvl', 'soulResonance', 'stoicEquilibrium', 'poeticResonance', 'subconsciousDepth', 'lastUpdated']);
+                    incoming().diff(existing()).affectedKeys().hasOnly(['xp', 'lvl', 'anaisXP', 'soulResonance', 'stoicEquilibrium', 'poeticResonance', 'subconsciousDepth', 'lastUpdated']);
 
       match /memories/{memoryId} {
         allow list: if isOwner(userId);
@@ -101,6 +144,31 @@ service cloud.firestore {
       match /sync_entries/{entryId} {
         allow list: if isOwner(userId);
         allow create: if isOwner(userId) && isValidSyncEntry(incoming());
+      }
+
+      match /spatial_anchors/{anchorId} {
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidSpatialAnchor(incoming());
+        allow delete: if isOwner(userId);
+      }
+
+      match /expedition_logs/{logId} {
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidExpeditionLog(incoming());
+        allow delete: if isOwner(userId);
+      }
+
+      match /neural_bridges/{bridgeId} {
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidNeuralBridge(incoming());
+        allow delete: if isOwner(userId);
+      }
+
+      match /recommendations/{recId} {
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidRecommendation(incoming());
+        allow update: if isOwner(userId) && incoming().diff(existing()).affectedKeys().hasOnly(['isDismissed']);
+        allow delete: if isOwner(userId);
       }
     }
   }

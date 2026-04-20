@@ -1,14 +1,12 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User } from 'firebase/auth';
-import { 
-  auth, db, doc, onSnapshot, setDoc, serverTimestamp, 
-  collection, query, orderBy, limit 
-} from '../lib/firebase';
+import { auth, db, doc, onSnapshot, setDoc, serverTimestamp, collection, query, orderBy, limit, getDocFromServer } from '../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 
 interface UserProfile {
   xp: number;
   lvl: number;
+  anaisXP: number;
   soulResonance: number;
   stoicEquilibrium: number;
   poeticResonance: number;
@@ -20,6 +18,7 @@ interface FirebaseContextType {
   profile: UserProfile | null;
   loading: boolean;
   isAuthorized: boolean;
+  rewardXP: (amount: number, anaisAmount?: number) => Promise<void>;
 }
 
 const FirebaseContext = createContext<FirebaseContextType | undefined>(undefined);
@@ -30,30 +29,50 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [loading, setLoading] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(false);
 
+  const rewardXP = async (amount: number, anaisAmount: number = 0) => {
+    if (!user || !profile) return;
+    try {
+      const userRef = doc(db, 'users', user.uid);
+      const newXP = (profile.xp || 0) + amount;
+      const newAnaisXP = (profile.anaisXP || 0) + anaisAmount;
+      const newLvl = Math.floor(newXP / 1000);
+      
+      await setDoc(userRef, {
+        ...profile,
+        xp: newXP,
+        anaisXP: newAnaisXP,
+        lvl: newLvl,
+        lastUpdated: serverTimestamp()
+      }, { merge: true });
+    } catch (error) {
+      console.error("XP rewards failed:", error);
+      // We don't throw here to avoid blocking UI transitions, 
+      // but we log it for debugging.
+    }
+  };
+
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       
       if (currentUser) {
-        // Strict Authorization Check
         const authorizedEmail = 'mumblejinx@gmail.com';
         if (currentUser.email === authorizedEmail && currentUser.emailVerified) {
           setIsAuthorized(true);
           
-          // Sync with Firestore Profile
           const userRef = doc(db, 'users', currentUser.uid);
           const unsubscribeProfile = onSnapshot(userRef, (snapshot) => {
             if (snapshot.exists()) {
               setProfile(snapshot.data() as UserProfile);
             } else {
-              // Initialize profile for the first time
               const initialProfile: UserProfile = {
-                xp: 14202,
-                lvl: 42,
-                soulResonance: 84,
-                stoicEquilibrium: 14,
-                poeticResonance: 88,
-                subconsciousDepth: 92
+                xp: 0,
+                lvl: 0,
+                anaisXP: 0,
+                soulResonance: 50,
+                stoicEquilibrium: 50,
+                poeticResonance: 50,
+                subconsciousDepth: 50
               };
               setDoc(userRef, {
                 ...initialProfile,
@@ -79,7 +98,7 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, []);
 
   return (
-    <FirebaseContext.Provider value={{ user, profile, loading, isAuthorized }}>
+    <FirebaseContext.Provider value={{ user, profile, loading, isAuthorized, rewardXP }}>
       {children}
     </FirebaseContext.Provider>
   );

@@ -1,4 +1,4 @@
-import { BrainCircuit, Database, Compass, Shield } from 'lucide-react';
+import { Flower, Database, Telescope, Shield, Compass, Network } from 'lucide-react';
 
 interface BottomNavProps {
   currentTab: string;
@@ -7,10 +7,12 @@ interface BottomNavProps {
 
 export default function BottomNav({ currentTab, setTab }: BottomNavProps) {
   const tabs = [
-    { id: 'oracle', label: 'THE ORACLE', icon: BrainCircuit, color: '#c97cff' },
-    { id: 'inner', label: 'INNER WORLD', icon: Database, color: '#c97cff' },
-    { id: 'seeker', label: 'THE SEEKER', icon: Compass, color: '#c97cff' },
-    { id: 'sanctuary', label: 'THE SANCTUARY', icon: Shield, color: '#c97cff' },
+    { id: 'oracle', label: 'ORACLE', icon: Flower, color: '#c97cff' },
+    { id: 'inner', label: 'INNER', icon: Database, color: '#c97cff' },
+    { id: 'seeker', label: 'SEEKER', icon: Telescope, color: '#c97cff' },
+    { id: 'sanctuary', label: 'SANCTUARY', icon: Shield, color: '#c97cff' },
+    { id: 'compass', label: 'COMPASS', icon: Compass, color: '#c97cff' },
+    { id: 'integrate', label: 'INTEGRATE', icon: Network, color: '#ff6b6b' },
   ];
 
   return (
@@ -25,7 +27,7 @@ export default function BottomNav({ currentTab, setTab }: BottomNavProps) {
             onClick={() => setTab(tab.id)}
             className={`flex flex-col items-center justify-center p-2 h-full w-full transition-all duration-75 active:scale-95 ${
               isActive 
-                ? 'bg-secondary text-surface' 
+                ? 'bg-secondary text-white shadow-[inset_0_0_10px_rgba(0,0,0,0.2)]' 
                 : 'text-secondary hover:bg-secondary/20 hover:text-tertiary'
             }`}
           >

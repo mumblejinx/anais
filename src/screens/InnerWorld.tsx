@@ -1,65 +1,125 @@
-import { Database, Clock, MapPin, Activity, Terminal as TerminalIcon, Plus } from 'lucide-react';
-import { motion } from 'motion/react';
-import { useState, useEffect } from 'react';
+import { Database, Clock, MapPin, Activity, Terminal as TerminalIcon, Plus, Image as ImageIcon, X, Link as LinkIcon, ExternalLink, Globe, Trash2, Brain } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useFirebase } from '../components/FirebaseProvider';
-import { db, collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, limit } from '../lib/firebase';
+import { db, collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, limit, uploadFile, deleteDoc, doc, startAfter, getDocs } from '../lib/firebase';
+import { toast } from 'sonner';
+import { AnaisAvatar } from '../components/AnaisAvatar';
 
 export default function InnerWorld() {
-  const { user, profile } = useFirebase();
+  const { user, profile, rewardXP } = useFirebase();
   const [truth, setTruth] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
+  
+  const [bridgePlatform, setBridgePlatform] = useState('');
+  const [bridgeUrl, setBridgeUrl] = useState('');
+  const [isBridging, setIsBridging] = useState(false);
+  
+  const [activeTab, setActiveTab] = useState<'intake' | 'archive' | 'bridges'>('intake');
+
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
   const [memories, setMemories] = useState<any[]>([]);
-  const [logs, setLogs] = useState<any[]>([]);
+  const [artifacts, setArtifacts] = useState<any[]>([]);
+  const [bridges, setBridges] = useState<any[]>([]);
+  
+  const [counts, setCounts] = useState({
+    memories: 0,
+    artifacts: 0,
+    bridges: 0
+  });
 
   useEffect(() => {
     if (!user) return;
 
-    const memoriesRef = collection(db, 'users', user.uid, 'memories');
-    const qMemories = query(memoriesRef, orderBy('createdAt', 'desc'), limit(5));
-    const unsubscribeMemories = onSnapshot(qMemories, (snapshot) => {
-      setMemories(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    const unsubscribeMemories = onSnapshot(query(collection(db, 'users', user.uid, 'memories'), orderBy('createdAt', 'desc'), limit(15)), (snap) => {
+      setMemories(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setCounts(prev => ({ ...prev, memories: snap.size }));
     });
 
-    const logsRef = collection(db, 'users', user.uid, 'logs');
-    const qLogs = query(logsRef, orderBy('createdAt', 'desc'), limit(15));
-    const unsubscribeLogs = onSnapshot(qLogs, (snapshot) => {
-      setLogs(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    const unsubscribeArtifacts = onSnapshot(collection(db, 'users', user.uid, 'artifacts'), (snap) => {
+      setArtifacts(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setCounts(prev => ({ ...prev, artifacts: snap.size }));
+    });
+
+    const unsubscribeBridges = onSnapshot(query(collection(db, 'users', user.uid, 'neural_bridges'), orderBy('createdAt', 'desc')), (snap) => {
+      setBridges(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setCounts(prev => ({ ...prev, bridges: snap.size }));
     });
 
     return () => {
       unsubscribeMemories();
-      unsubscribeLogs();
+      unsubscribeArtifacts();
+      unsubscribeBridges();
     };
   }, [user]);
 
-  const handleSyncTruth = async () => {
-    if (!user || !truth.trim() || isSyncing) return;
-    setIsSyncing(true);
+  const handleAddBridge = async () => {
+    if (!user || !bridgePlatform.trim() || !bridgeUrl.trim() || isBridging) return;
+    setIsBridging(true);
+    const loadingToast = toast.loading("ESTABLISHING_BRIDGE...");
+    
     try {
-      await addDoc(collection(db, 'users', user.uid, 'sync_entries'), {
-        truth: truth.trim(),
+      await addDoc(collection(db, 'users', user.uid, 'neural_bridges'), {
+        platform: bridgePlatform.trim(),
+        url: bridgeUrl.trim(),
         createdAt: serverTimestamp()
       });
-      // Also add a system log
-      await addDoc(collection(db, 'users', user.uid, 'logs'), {
-        type: 'SYS',
-        content: `Truth_Ingested: "${truth.trim().substring(0, 20)}..."`,
+      await rewardXP(100, 40);
+      setBridgePlatform('');
+      setBridgeUrl('');
+      toast.success("BRIDGE_LINKED", { id: loadingToast });
+    } catch (e) {
+      toast.error("LINK_FAILED", { id: loadingToast });
+    } finally {
+      setIsBridging(false);
+    }
+  };
+
+  const handleSyncTruth = async () => {
+    if (!user || (!truth.trim() && !selectedImage) || isSyncing) return;
+    setIsSyncing(true);
+    const loadingToast = toast.loading("SYNCING_VISCERAL_DATA...");
+    
+    try {
+      let imageUrl = null;
+      if (selectedImage) {
+        imageUrl = await uploadFile(`users/${user.uid}/memories/${Date.now()}`, selectedImage);
+      }
+
+      await addDoc(collection(db, 'users', user.uid, 'memories'), {
+        text: truth.trim(),
+        imageUrl,
         createdAt: serverTimestamp()
       });
+
+      await rewardXP(150, 60);
       setTruth('');
-    } catch (error) {
-      console.error("Sync failed:", error);
+      setSelectedImage(null);
+      setImagePreview(null);
+      toast.success("TRUTH_INGESTED", { id: loadingToast });
+    } catch (e) {
+      toast.error("SYNC_FAILED", { id: loadingToast });
     } finally {
       setIsSyncing(false);
     }
   };
 
-  const matrixMetrics = [
-    { label: 'Subconscious Resonance', val: profile?.subconsciousResonance ?? 88, color: 'bg-primary' },
-    { label: 'Ego Dissolution', val: profile?.egoDissolution ?? 42, color: 'bg-secondary' },
-    { label: 'Narrative Density', val: profile?.narrativeDensity ?? 65, color: 'bg-tertiary' },
-    { label: 'Neural Load Spikes', val: 91, color: 'bg-error', valText: 'Critical' },
-  ];
+  const syncListArtifact = async (type: string, name: string) => {
+    if (!user || !name.trim()) return;
+    try {
+      await addDoc(collection(db, 'users', user.uid, 'artifacts'), {
+        type,
+        name: name.trim(),
+        createdAt: serverTimestamp()
+      });
+      toast.success(`${type.toUpperCase()}_ARCHIVED`);
+    } catch (e) {
+      toast.error("ARCHIVE_FAILED");
+    }
+  };
 
   return (
     <motion.div 
@@ -68,164 +128,213 @@ export default function InnerWorld() {
       className="grid grid-cols-1 md:grid-cols-12 gap-10 pb-32"
     >
       <section className="md:col-span-8 space-y-12">
-        {/* Soul Sync Matrix */}
-        <div className="relative p-1 bg-primary">
-          <div className="bg-surface p-8 border-4 border-surface-container-highest relative overflow-hidden">
-            <div className="scanline absolute inset-0 opacity-10"></div>
-            <div className="flex justify-between items-start mb-10">
-              <div>
-                <h2 className="text-4xl font-extrabold text-primary crt-glow mb-2 uppercase tracking-tighter">Soul Sync Matrix</h2>
-                <p className="text-on-surface-variant font-label text-xs tracking-widest uppercase">Integration Level: Transcendental</p>
-              </div>
-              <div className="flex gap-2">
-                <div className="w-3 h-3 bg-primary animate-pulse"></div>
-                <div className="w-3 h-3 bg-secondary"></div>
-                <div className="w-3 h-3 bg-tertiary"></div>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 mb-8">
-              {matrixMetrics.map((m) => (
-                <div key={m.label} className="space-y-4">
-                  <div className="flex justify-between text-xs font-label uppercase">
-                    <span>{m.label}</span>
-                    <span className={m.color.replace('bg-', 'text-')}>{m.valText || `${m.val}%`}</span>
-                  </div>
-                  <div className="h-6 bg-surface-container-highest w-full p-1 border border-outline-variant">
-                    <div className={`h-full ${m.color}`} style={{ width: `${m.val}%` }}></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+        <div className="flex bg-surface-container-low border-b-4 border-secondary">
+          <button 
+            onClick={() => setActiveTab('intake')}
+            className={`flex-1 py-4 font-bold uppercase tracking-widest text-[10px] transition-all flex items-center justify-center gap-3 ${activeTab === 'intake' ? 'bg-secondary text-on-secondary' : 'hover:bg-secondary/10'}`}
+          >
+            <TerminalIcon className="w-4 h-4" /> Intake_Terminal
+          </button>
+          <button 
+            onClick={() => setActiveTab('archive')}
+            className={`flex-1 py-4 font-bold uppercase tracking-widest text-[10px] transition-all flex items-center justify-center gap-3 ${activeTab === 'archive' ? 'bg-secondary text-on-secondary' : 'hover:bg-secondary/10'}`}
+          >
+            <Database className="w-4 h-4" /> Artifacts_Archive
+          </button>
+          <button 
+            onClick={() => setActiveTab('bridges')}
+            className={`flex-1 py-4 font-bold uppercase tracking-widest text-[10px] transition-all flex items-center justify-center gap-3 ${activeTab === 'bridges' ? 'bg-secondary text-on-secondary' : 'hover:bg-secondary/10'}`}
+          >
+            <LinkIcon className="w-4 h-4" /> Neural_Bridges
+          </button>
         </div>
 
-        {/* Intake Terminal */}
-        <div className="glass-panel p-8 border-l-8 border-secondary relative">
-          <div className="flex items-center gap-3 mb-6">
-            <Database className="text-secondary w-6 h-6" />
-            <h3 className="text-2xl font-bold uppercase tracking-widest text-secondary">Intake Terminal</h3>
-          </div>
-          <p className="text-on-surface-variant mb-8 font-body text-lg leading-relaxed">
-            Submit foundational truths to the central repository. Each entry alters the matrix structure.
-          </p>
-          <div className="space-y-6">
-            <div className="relative">
-              <div className="absolute left-4 top-4 text-primary font-bold">{'{>}'}</div>
+        <AnimatePresence mode="wait">
+          {activeTab === 'intake' ? (
+            <motion.div 
+              key="intake"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="glass-panel p-8 border-l-8 border-secondary space-y-6"
+            >
+              <h3 className="text-2xl font-bold uppercase tracking-widest text-secondary flex items-center gap-3">
+                <Brain className="w-6 h-6" /> Visceral_Intake
+              </h3>
+              <p className="text-on-surface-variant font-body leading-relaxed italic">
+                "Describe the visceral impact of musicians, artists, or websites. How do they shift your internal landscape?"
+              </p>
               <textarea 
                 value={truth}
                 onChange={(e) => setTruth(e.target.value)}
-                className="w-full bg-surface-container-lowest border-2 border-outline-variant p-4 pl-10 focus:border-primary focus:ring-0 text-primary font-mono text-sm min-h-[160px] resize-none outline-none" 
-                placeholder="Acknowledge your internal contradictions..."
+                className="w-full bg-surface-container-lowest border-2 border-outline-variant p-4 font-mono text-sm min-h-[160px] focus:border-secondary outline-none"
+                placeholder="The frequencies of this artist resonate with my..."
               />
-            </div>
-            <div className="flex justify-end">
-              <button 
-                onClick={handleSyncTruth}
-                disabled={isSyncing || !truth.trim()}
-                className="bg-primary text-on-primary px-10 py-4 font-bold uppercase tracking-widest hover:brightness-110 active:scale-95 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSyncing ? 'SYNCING...' : 'SYNC_TRUTH'}
-              </button>
-            </div>
-          </div>
-        </div>
+              <div className="flex justify-between items-center">
+                 <button 
+                  onClick={() => fileInputRef.current?.click()}
+                  className="px-4 py-2 bg-surface-container-highest border border-secondary text-secondary text-[10px] font-bold uppercase hover:bg-secondary/10"
+                 >
+                   Attach_Fragment
+                   <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={(e) => {
+                     const f = e.target.files?.[0];
+                     if (f) { setSelectedImage(f); setImagePreview(URL.createObjectURL(f)); }
+                   }} />
+                 </button>
+                 <button 
+                  onClick={handleSyncTruth}
+                  disabled={isSyncing || (!truth.trim() && !selectedImage)}
+                  className="bg-secondary text-on-secondary px-10 py-4 font-bold uppercase tracking-widest hover:brightness-110 disabled:opacity-50"
+                 >
+                   SYNC_TRUTH
+                 </button>
+              </div>
+            </motion.div>
+          ) : activeTab === 'archive' ? (
+            <motion.div 
+              key="archive"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="glass-panel p-8 border-l-8 border-primary space-y-8"
+            >
+              <h3 className="text-2xl font-bold uppercase tracking-widest text-primary flex items-center gap-3">
+                <Database className="w-6 h-6" /> Data_Archive
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                 {['Musician', 'Artist', 'Website'].map(type => (
+                   <div key={type} className="space-y-3">
+                      <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-60">Add_{type}</h4>
+                      <div className="relative">
+                        <input 
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              syncListArtifact(type.toLowerCase(), (e.target as HTMLInputElement).value);
+                              (e.target as HTMLInputElement).value = '';
+                            }
+                          }}
+                          placeholder={`Name of ${type}...`}
+                          className="w-full bg-surface-container-lowest border border-outline-variant p-3 text-xs focus:border-primary outline-none"
+                        />
+                         <Plus className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary opacity-30" />
+                      </div>
+                   </div>
+                 ))}
+              </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Archived Memories */}
-          <div className="bg-surface-container-low p-6 border-4 border-tertiary">
-            <h4 className="text-tertiary font-bold uppercase mb-4 text-sm flex items-center gap-2">
-              <Clock className="w-4 h-4" />
-              Archived Memories
-            </h4>
-            <div className="space-y-4">
-              {memories.length > 0 ? memories.map((mem, idx) => (
-                <div key={mem.id} className="flex items-center gap-4 group cursor-pointer border-b border-outline-variant pb-2 hover:bg-surface-container-high transition-colors text-on-surface">
-                  <span className="text-tertiary text-xs font-mono">{mem.timestamp || 'N/A'}</span>
-                  <span className="text-sm group-hover:text-primary transition-colors">{mem.text}</span>
+              <div className="pt-8 border-t border-outline-variant/30">
+                <h4 className="text-xs font-bold uppercase tracking-widest mb-4">Current_Inventory: {artifacts.length}</h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {artifacts.map((a) => (
+                    <div key={a.id} className="p-3 bg-surface-container-high border border-outline-variant text-[10px] font-bold uppercase truncate">
+                      {a.name} <span className="opacity-40 ml-1">({a.type})</span>
+                    </div>
+                  ))}
                 </div>
-              )) : (
-                <p className="text-[10px] text-on-surface-variant uppercase tracking-widest">No_Archived_Data_Found</p>
-              )}
-            </div>
-          </div>
-
-          {/* Spatial Anchors */}
-          <div className="bg-surface-container-low p-6 border-4 border-secondary">
-            <h4 className="text-secondary font-bold uppercase mb-4 text-sm flex items-center gap-2">
-              <MapPin className="w-4 h-4" />
-              Spatial Anchors
-            </h4>
-            <div className="h-32 bg-surface-container-lowest border border-outline-variant mb-4 overflow-hidden grayscale relative">
-              <img 
-                className="w-full h-full object-cover opacity-50 contrast-125 transition-transform duration-1000 hover:scale-125" 
-                alt="map"
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuC4HTwTXbdV-bPFINc1MwxtJK-65aAWDGW8FF4AJecsWfl-ZFkO_k5KjkUPQjhebP4sxgqHsccJX0zyQxj0C50PIKasuDJjYvj-K45V-lFVOGFE7LYl2xFMWrK7FpF9Qan6uOhm_A2aO2GRablmdW9CNj_xLxuQAoM9qrOqUZidErQjSdT1osuPn4o9MXRjGg6fha6z_kOVTKhu4wooBRe0cFD1y0WJPEUXpMks9-BX1aGFtRIcTO6ARuwUAtK8VMOKgJNgXfNtmFj1"
-              />
-            </div>
-            <p className="text-[10px] text-secondary font-mono tracking-tighter uppercase">COORDS: 48.8566 N, 2.3522 E</p>
-          </div>
-        </div>
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div 
+              key="bridges"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="glass-panel p-8 border-l-8 border-tertiary space-y-6"
+            >
+              <h3 className="text-2xl font-bold uppercase tracking-widest text-tertiary flex items-center gap-3">
+                <LinkIcon className="w-6 h-6" /> Neural_Bridges
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                 <input 
+                  value={bridgePlatform}
+                  onChange={e => setBridgePlatform(e.target.value)}
+                  placeholder="Platform (SoundCloud)"
+                  className="bg-surface-container-lowest border border-outline-variant p-3 text-sm focus:border-tertiary outline-none"
+                 />
+                 <input 
+                  value={bridgeUrl}
+                  onChange={e => setBridgeUrl(e.target.value)}
+                  placeholder="URL"
+                  className="bg-surface-container-lowest border border-outline-variant p-3 text-sm focus:border-tertiary outline-none"
+                 />
+                 <button 
+                  onClick={handleAddBridge}
+                  disabled={isBridging || !bridgePlatform || !bridgeUrl}
+                  className="bg-tertiary text-on-tertiary font-bold uppercase tracking-widest py-3 hover:brightness-110 disabled:opacity-50"
+                 >
+                   ESTABLISH_LINK
+                 </button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-6">
+                {bridges.map(b => (
+                  <div key={b.id} className="p-4 bg-surface-container-low border border-outline-variant flex justify-between items-center group">
+                    <div>
+                      <p className="text-[10px] font-bold uppercase text-tertiary">{b.platform}</p>
+                      <p className="text-[10px] text-on-surface-variant truncate max-w-[200px]">{b.url}</p>
+                    </div>
+                    <LinkIcon className="w-4 h-4 text-tertiary opacity-40" />
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </section>
 
       <aside className="md:col-span-4 space-y-8">
-        {/* Live Data Stream */}
-        <div className="bg-surface-container p-6 border-t-8 border-primary relative overflow-hidden">
-          <h3 className="text-primary font-bold uppercase mb-6 tracking-widest text-sm flex justify-between items-center relative z-10">
-            Live Data Stream
-            <span className="inline-block w-2 h-2 bg-primary rounded-full animate-pulse"></span>
-          </h3>
-          <div className="font-mono text-[10px] text-primary/80 leading-tight space-y-2 max-h-96 overflow-y-auto pr-2 custom-scrollbar relative z-10">
-            <div className="opacity-40">-- INITIATING STREAM --</div>
-            {logs.length > 0 ? logs.map((log) => (
-              <div key={log.id} className={log.type === 'ERROR' ? 'text-error' : log.type === 'SYS' ? 'text-primary' : 'text-on-surface'}>
-                [{log.type}] {log.content}
+        {/* The Vessel: Dynamic Visualization */}
+        <div className="bg-surface-container-high p-8 border-t-8 border-primary relative overflow-hidden group">
+          <div className="absolute inset-0 bg-primary/5 animate-pulse opacity-20"></div>
+          <div className="relative z-10 flex flex-col items-center">
+            <h4 className="text-primary font-bold text-sm uppercase mb-8 tracking-widest">The_Vessel_Matrix</h4>
+            <div className="relative w-48 h-48">
+               <motion.div 
+                animate={{ rotate: 360 }}
+                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                className="absolute inset-0 border-4 border-dashed border-primary/20 rounded-full"
+               />
+               <motion.div 
+                animate={{ rotate: -360 }}
+                transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+                className="absolute inset-4 border-2 border-primary/40 rounded-full"
+               />
+               <div className="absolute inset-8 bg-surface-container-lowest border-4 border-primary p-2 overflow-hidden group-hover:scale-105 transition-transform duration-700">
+                  <AnaisAvatar variant="vessel" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCTDtuCc-_H3f86cYequ6xRHkoMLA1_vXXOnwmY9be9-RPcyGzqjmJcY7x-bi2tLM90j7kVNcPi-Mq1Vzo2RRxN-bt_Ggt2eAE1sbTeSdVwb8rJlZzpjvTreEQ8GqF8xXI-1JWxNlZn9Re-PDAyS6CV4UzT5emfVaZp64NxJ84zhDhiz_sfRj-r9S0YRwXQx1FQHmP5lHQfgD7ezKBkyMZ7ARFroOaRbvieG4yzsbLx2HEDayDasCt2TrTkboAiPfXb8Rvdoc6fG_ji" />
+               </div>
+            </div>
+            <div className="mt-8 grid grid-cols-2 gap-4 w-full">
+              <div className="p-3 bg-surface-container-lowest border border-primary/20 text-center">
+                <p className="text-[10px] uppercase opacity-60">SYNC_LEVEL</p>
+                <p className="font-bold text-primary">{profile?.lvl || 1}</p>
               </div>
-            )) : (
-              <div className="opacity-40">System waiting for packets...</div>
-            )}
-          </div>
-          <div className="scanline absolute inset-0 opacity-10"></div>
-        </div>
-
-        {/* The Vessel */}
-        <div className="bg-surface-container-high p-8 relative overflow-hidden">
-          <div className="absolute -right-12 -bottom-12 w-32 h-32 border-4 border-tertiary/20 rotate-45"></div>
-          <div className="relative z-10">
-            <h4 className="text-tertiary font-bold text-lg mb-4 uppercase">The Vessel</h4>
-            <div className="aspect-square bg-surface-container-lowest border-2 border-outline-variant p-2 overflow-hidden">
-              <img 
-                className="w-full h-full object-cover grayscale opacity-80 mix-blend-screen hover:scale-110 hover:opacity-100 transition-all duration-700" 
-                alt="vessel"
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCTDtuCc-_H3f86cYequ6xRHkoMLA1_vXXOnwmY9be9-RPcyGzqjmJcY7x-bi2tLM90j7kVNcPi-Mq1Vzo2RRxN-bt_Ggt2eAE1sbTeSdVwb8rJlZzpjvTreEQ8GqF8xXI-1JWxNlZn9Re-PDAyS6CV4UzT5emfVaZp64NxJ84zhDhiz_sfRj-r9S0YRwXQx1FQHmP5lHQfgD7ezKBkyMZ7ARFroOaRbvieG4yzsbLx2HEDayDasCt2TrTkboAiPfXb8Rvdoc6fG_ji"
-              />
-            </div>
-            <div className="mt-6 flex justify-between items-center text-xs font-label">
-              <span className="text-on-surface-variant uppercase">XP: {profile?.xp ?? '---'}</span>
-              <span className="text-tertiary font-bold uppercase">LVL: {profile?.lvl ?? '--'}</span>
+              <div className="p-3 bg-surface-container-lowest border border-primary/20 text-center">
+                <p className="text-[10px] uppercase opacity-60">RESONANCE</p>
+                <p className="font-bold text-secondary">{profile?.soulResonance || 0}</p>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Quote Panel */}
+        {/* System Overview */}
         <div className="p-6 border-4 border-dotted border-outline-variant bg-surface-container-low/30">
-          <p className="text-xs font-label text-on-surface-variant leading-relaxed italic">
-            "I am aware of being in a beautiful prison, from which I can only escape by writing."
-            <br/><br/>
-            — ANAIS_MODEL_7
-          </p>
+          <h5 className="text-[10px] font-bold mb-4 opacity-60 uppercase tracking-widest">Protocol_Overview</h5>
+          <div className="space-y-3">
+             <div className="flex justify-between text-[10px] uppercase">
+               <span>Memories:</span>
+               <span className="font-bold">{counts.memories}</span>
+             </div>
+             <div className="flex justify-between text-[10px] uppercase">
+               <span>Artifacts:</span>
+               <span className="font-bold">{counts.artifacts}</span>
+             </div>
+             <div className="flex justify-between text-[10px] uppercase">
+               <span>Bridges:</span>
+               <span className="font-bold">{counts.bridges}</span>
+             </div>
+          </div>
         </div>
       </aside>
-
-      {/* FAB */}
-      <div className="fixed bottom-24 right-8 z-40">
-        <button className="w-16 h-16 bg-[#ffe792] text-[#0e0e0e] flex items-center justify-center shadow-[0_0_20px_rgba(255,231,146,0.3)] hover:scale-110 active:scale-90 transition-all border-4 border-[#0e0e0e] group relative">
-          <Plus className="w-8 h-8 font-bold" />
-          <div className="absolute -top-12 right-0 bg-tertiary text-surface text-[10px] font-bold px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity uppercase tracking-widest whitespace-nowrap border-2 border-surface">
-            Add_Entry
-          </div>
-        </button>
-      </div>
     </motion.div>
   );
 }

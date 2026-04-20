@@ -4,6 +4,21 @@ import { loginWithGoogle, logout } from '../lib/firebase';
 import { motion } from 'motion/react';
 
 export const LoginScreen = () => {
+  const [error, setError] = React.useState<string | null>(null);
+
+  const handleLogin = async () => {
+    try {
+      setError(null);
+      await loginWithGoogle();
+    } catch (err: any) {
+      if (err.code === 'auth/unauthorized-domain') {
+        setError('DOMAIN_UNAUTHORIZED: Add "localhost" to Firebase Console > Auth > Settings.');
+      } else {
+        setError(err.message || 'AUTHENTICATION_FAILED');
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <motion.div 
@@ -16,9 +31,17 @@ export const LoginScreen = () => {
         <h1 className="text-3xl font-bold text-tertiary uppercase tracking-tighter mb-2">ANAIS_V4.0 AUTHORIZATION</h1>
         <p className="text-on-surface-variant mb-8 text-sm uppercase tracking-widest font-bold">Secure Entry Protocol Required</p>
         
+        {error && (
+          <div className="mb-6 p-3 bg-error/10 border border-error text-error text-[10px] font-mono leading-tight uppercase text-left">
+            [!] ERROR_DETECTED:
+            <br />
+            {error}
+          </div>
+        )}
+
         <button 
-          onClick={loginWithGoogle}
-          className="w-full bg-primary text-surface py-4 font-bold uppercase tracking-widest hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-3 cursor-pointer"
+          onClick={handleLogin}
+          className="w-full bg-primary text-on-primary py-4 font-bold uppercase tracking-widest hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-3 cursor-pointer"
         >
           <LogIn className="w-5 h-5" />
           Authenticate_With_Google

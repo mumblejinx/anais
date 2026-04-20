@@ -7,6 +7,7 @@
       "properties": {
         "xp": { "type": "number" },
         "lvl": { "type": "number" },
+        "anaisXP": { "type": "number" },
         "soulResonance": { "type": "number" },
         "stoicEquilibrium": { "type": "number" },
         "poeticResonance": { "type": "number" },
@@ -22,6 +23,7 @@
       "properties": {
         "timestamp": { "type": "string" },
         "text": { "type": "string" },
+        "imageUrl": { "type": "string" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["timestamp", "text"]
@@ -44,6 +46,7 @@
       "properties": {
         "type": { "type": "string", "enum": ["book", "key", "pen", "locked"] },
         "name": { "type": "string" },
+        "imageUrl": { "type": "string" },
         "collectedAt": { "type": "string", "format": "date-time" }
       },
       "required": ["type"]
@@ -54,10 +57,63 @@
       "type": "object",
       "properties": {
         "truth": { "type": "string" },
+        "imageUrl": { "type": "string" },
         "impact": { "type": "object" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["truth"]
+    },
+    "SpatialAnchor": {
+      "title": "Spatial Anchor",
+      "description": "Places that ground the user in physical reality",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "coords": { "type": "string" },
+        "impact": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name"]
+    },
+    "ExpeditionLog": {
+      "title": "Expedition Log",
+      "description": "Activities that define the user's external depth",
+      "type": "object",
+      "properties": {
+        "activity": { "type": "string" },
+        "resonance": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["activity"]
+    },
+    "NeuralBridge": {
+      "title": "Neural Bridge",
+      "description": "Links to the user's external digital presence for behavioral analysis",
+      "type": "object",
+      "properties": {
+        "platform": { "type": "string" },
+        "url": { "type": "string" },
+        "resonance": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["platform", "url"]
+    },
+    "Recommendation": {
+      "title": "Anaïs Recommendation",
+      "description": "AI-suggested external resonance points (media, places, events)",
+      "type": "object",
+      "properties": {
+        "category": { "type": "string", "enum": ["movie", "book", "comic", "website", "music", "place", "event"] },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "url": { "type": "string" },
+        "resonanceScore": { "type": "number" },
+        "isDismissed": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["category", "title", "description"]
     }
   },
   "firestore": {
@@ -80,6 +136,22 @@
     "/users/{userId}/sync_entries/{entryId}": {
       "schema": "SyncEntry",
       "description": "Linked sync entries"
+    },
+    "/users/{userId}/spatial_anchors/{anchorId}": {
+      "schema": "SpatialAnchor",
+      "description": "Places that ground the user"
+    },
+    "/users/{userId}/expedition_logs/{logId}": {
+      "schema": "ExpeditionLog",
+      "description": "User activities and their resonance"
+    },
+    "/users/{userId}/neural_bridges/{bridgeId}": {
+      "schema": "NeuralBridge",
+      "description": "External digital account links"
+    },
+    "/users/{userId}/recommendations/{recId}": {
+      "schema": "Recommendation",
+      "description": "AI suggestions for external discovery"
     }
   }
 }

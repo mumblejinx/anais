@@ -2,13 +2,48 @@
 
 Atmospheric, retro-terminal introspection application inspired by the works of Anaïs Nin. Built with React, Tailwind CSS, and Firebase.
 
-## 🚀 Quick Start (Local Development)
+---
 
-To run this terminal on your local machine, follow these precise steps:
+## 🌐 Running on GitHub & Deployment
+
+If you are moving this project from AI Studio or Localhost to GitHub, follow these instructions to ensure the Neural Matrix remains stable.
+
+### 1. Synchronization
+* **Push to GitHub**: If you haven't already, use the "Export to GitHub" or "Sync to GitHub" feature in AI Studio, or manually push your local repository:
+  ```bash
+  git remote add origin https://github.com/YOUR_USERNAME/anais-matrix.git
+  git branch -M main
+  git push -u origin main
+  ```
+
+### 2. Environment Configuration (CRITICAL)
+For the Oracle and Seeker modules to function, you must provide a Gemini API Key.
+
+#### **For Local Run (from Clone):**
+1. Create a `.env` file in the root directory.
+2. Add your key: `VITE_GEMINI_API_KEY=your_key_here` (Note: Use the `VITE_` prefix for client-side access in this build).
+
+#### **For Deployment (GitHub Secrets):**
+If you are deploying via GitHub Actions (e.g., to Cloud Run or Vercel):
+1. Go to your GitHub Repository > **Settings** > **Secrets and variables** > **Actions**.
+2. Add a New Repository Secret:
+   * **Name**: `GEMINI_API_KEY`
+   * **Value**: Your actual API Key.
+
+### 3. Firebase Connectivity
+The application relies on `firebase-applet-config.json` for its database connection.
+* **Security Note**: This file contains public keys, but it is best practice to ensure your Firestore Rules are deployed (see below) to prevent unauthorized writes.
+* **Setup**: If the file is missing from your repository (e.g., if it's in `.gitignore`), you must recreate it manually in the root folder using your Firebase project settings.
+
+---
+
+## 🚀 Local Development
+
+To run this terminal on your local machine:
 
 ### 1. Prerequisites
 * **Node.js**: [Download](https://nodejs.org/) and install Version 18 or higher.
-* **Firebase Project**: You must have the `anais-1111` project (or your own) setup in the [Firebase Console](https://console.firebase.google.com/).
+* **Firebase Project**: You must have a Firebase project setup in the [Firebase Console](https://console.firebase.google.com/).
 
 ### 2. Installation
 ```bash
@@ -16,64 +51,45 @@ To run this terminal on your local machine, follow these precise steps:
 npm install
 ```
 
-### 3. Environment Configuration
-The app retrieves its identity from `firebase-applet-config.json`. Ensure this file exists in the root directory with your Firebase keys:
-
-```json
-{
-  "projectId": "anais-1111",
-  "appId": "...",
-  "apiKey": "...",
-  "authDomain": "...",
-  "firestoreDatabaseId": "...",
-  "storageBucket": "...",
-  "messagingSenderId": "..."
-}
-```
-
-### 4. Initialization
+### 3. Execution
 ```bash
 # Start the development server
 npm run dev
 ```
-
 The terminal will be accessible at `http://localhost:3000`.
 
 ---
 
 ## 🛡️ Security Protocol
-This application is hardened against unauthorized entry.
-* **Identity Guard**: Only `mumblejinx@gmail.com` is whitelisted for terminal access.
-* **Firebase Rules**: Ensure you have deployed the contents of `firestore.rules` to your Firebase console to enable the ABAC (Attribute-Based Access Control) security model.
 
-To deploy rules from your local machine:
-```bash
-# Install Firebase CLI if you haven't
-npm install -g firebase-tools
+This application is hardened against unauthorized entry through Identity Whitelisting.
 
-# Login and initialize
-firebase login
-firebase init firestore
+* **Identity Guard**: Access is restricted based on the `isAuthorized` flag in `FirebaseProvider.tsx`. Ensure your email is added to the authorized list or database.
+* **Firestore Rules**: You MUST deploy `firestore.rules` to enable the Attribute-Based Access Control (ABAC) model.
+  ```bash
+  # Install Firebase CLI
+  npm install -g firebase-tools
 
-# Deploy the rules
-firebase deploy --only firestore:rules
-```
+  # Login and Deploy
+  firebase login
+  firebase deploy --only firestore:rules
+  ```
 
 ---
 
 ## 🧪 Architecture
-* **Frontend**: React 18 + Vite (configured for hardware-accelerated CRT effects).
-* **Styling**: Tailwind CSS with custom pixel-border and scanline utilities.
-* **Database**: Google Cloud Firestore (Multi-region: asia-east1).
-* **Animations**: Motion (formerly Framer Motion) for fluid cinematic transitions.
+* **Frontend**: React 18 + Vite (Hardware-accelerated CRT effects).
+* **AI Engine**: Google Gemini (via `@google/genai`).
+* **Database**: Cloud Firestore (NoSQL).
+* **Animations**: Motion (Breathing avatars and spectral shifts).
 
 ---
 
 ## 📖 System Philosophy
-"We do not see things as they are, we see them as we are." — Anais Nin
+"I am an excitable person who only understands life lyrically, musically." — Anaïs Nin
 
-This application is not just a tool; it is a mirror. It tracks soul resonance, subconscious depth, and narrative consistency. Every truth ingested through the **Inner World** terminal evolves the core matrix.
+This terminal maps the intersection of human visceral experience and AI analytical depth. Every entry evolves the **Vessel Matrix**.
 
 ---
 **ARCHITECT_ID**: mumblejinx@gmail.com
-**BUILD_VERSION**: 4.0.0-PROD
+**SYSTEM_STATUS**: STABLE // NEURAL_SYNC_ONLINE
