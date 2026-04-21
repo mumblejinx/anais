@@ -217,22 +217,22 @@ export default function TheOracle() {
     >
       {/* Left side: Neural Interaction */}
       <section className="lg:col-span-8 flex flex-col gap-8 h-full">
-        <div className="flex bg-surface-container-low border-b-4 border-primary shrink-0">
+        <div className="flex flex-col md:flex-row bg-surface-container-low border-b-4 border-primary shrink-0">
           <button 
             onClick={() => setActiveTab('dialogue')}
-            className={`flex-1 py-4 font-bold uppercase tracking-widest text-[10px] transition-all flex items-center justify-center gap-3 ${activeTab === 'dialogue' ? 'bg-primary text-on-primary' : 'hover:bg-primary/10'}`}
+            className={`py-4 md:flex-1 font-bold uppercase tracking-widest text-[10px] transition-all flex items-center justify-center gap-3 ${activeTab === 'dialogue' ? 'bg-primary text-on-primary' : 'hover:bg-primary/10 border-b border-primary/20 md:border-b-0'}`}
           >
             <TerminalIcon className="w-4 h-4" /> Neural_Dialogue
           </button>
           <button 
             onClick={() => setActiveTab('archive')}
-            className={`flex-1 py-4 font-bold uppercase tracking-widest text-[10px] transition-all flex items-center justify-center gap-3 ${activeTab === 'archive' ? 'bg-primary text-on-primary' : 'hover:bg-primary/10'}`}
+            className={`py-4 md:flex-1 font-bold uppercase tracking-widest text-[10px] transition-all flex items-center justify-center gap-3 ${activeTab === 'archive' ? 'bg-primary text-on-primary' : 'hover:bg-primary/10 border-b border-primary/20 md:border-b-0'}`}
           >
             <Database className="w-4 h-4" /> Artifacts_Archive
           </button>
           <button 
             onClick={() => setActiveTab('discovery')}
-            className={`flex-1 py-4 font-bold uppercase tracking-widest text-[10px] transition-all flex items-center justify-center gap-3 ${activeTab === 'discovery' ? 'bg-primary text-on-primary' : 'hover:bg-primary/10'}`}
+            className={`py-4 md:flex-1 font-bold uppercase tracking-widest text-[10px] transition-all flex items-center justify-center gap-3 ${activeTab === 'discovery' ? 'bg-primary text-on-primary' : 'hover:bg-primary/10'}`}
           >
             <Globe className="w-4 h-4" /> Discovery
           </button>

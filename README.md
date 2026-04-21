@@ -67,8 +67,18 @@ If you are deploying via GitHub Actions (e.g., to Cloud Run or Vercel):
 
 ### 3. Firebase Connectivity
 The application relies on `firebase-applet-config.json` for its database connection.
-* **Security Note**: This file contains public keys, but it is best practice to ensure your Firestore Rules are deployed (see below) to prevent unauthorized writes.
-* **Setup**: If the file is missing from your repository (e.g., if it's in `.gitignore`), you must recreate it manually in the root folder using your Firebase project settings.
+
+#### **CRITICAL: Authorize Your Domain**
+To use Google Authentication on GitHub, you must manually allowlist your domain in the Firebase Console:
+1. Go to the [Firebase Console](https://console.firebase.google.com/).
+2. Select your project.
+3. Navigate to **Authentication** > **Settings** (tab) > **Authorized domains**.
+4. Click **Add domain** and enter your GitHub Pages domain (e.g., `mumblejinx.github.io`).
+5. Also ensure `localhost` is listed if you plan to test locally.
+6. **Wait 1-2 minutes** for Firebase to propagate the change.
+
+#### **Security Note**
+This file contains public keys, but it is best practice to ensure your Firestore Rules are deployed (see below) to prevent unauthorized writes.
 
 ---
 

@@ -44,7 +44,7 @@
       "description": "Collected items and fragments",
       "type": "object",
       "properties": {
-        "type": { "type": "string", "enum": ["book", "key", "pen", "locked"] },
+        "type": { "type": "string", "enum": ["book", "key", "pen", "locked", "movies", "music", "books", "comics", "artists", "websites", "locations", "activities", "musician", "artist", "website"] },
         "name": { "type": "string" },
         "imageUrl": { "type": "string" },
         "collectedAt": { "type": "string", "format": "date-time" }

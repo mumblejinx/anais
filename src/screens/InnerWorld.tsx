@@ -128,22 +128,22 @@ export default function InnerWorld() {
       className="grid grid-cols-1 md:grid-cols-12 gap-10 pb-32"
     >
       <section className="md:col-span-8 space-y-12">
-        <div className="flex bg-surface-container-low border-b-4 border-secondary">
+        <div className="flex flex-col md:flex-row bg-surface-container-low border-b-4 border-secondary">
           <button 
             onClick={() => setActiveTab('intake')}
-            className={`flex-1 py-4 font-bold uppercase tracking-widest text-[10px] transition-all flex items-center justify-center gap-3 ${activeTab === 'intake' ? 'bg-secondary text-on-secondary' : 'hover:bg-secondary/10'}`}
+            className={`py-4 md:flex-1 font-bold uppercase tracking-widest text-[10px] transition-all flex items-center justify-center gap-3 ${activeTab === 'intake' ? 'bg-secondary text-on-secondary' : 'hover:bg-secondary/10 border-b border-secondary/20 md:border-b-0'}`}
           >
             <TerminalIcon className="w-4 h-4" /> Intake_Terminal
           </button>
           <button 
             onClick={() => setActiveTab('archive')}
-            className={`flex-1 py-4 font-bold uppercase tracking-widest text-[10px] transition-all flex items-center justify-center gap-3 ${activeTab === 'archive' ? 'bg-secondary text-on-secondary' : 'hover:bg-secondary/10'}`}
+            className={`py-4 md:flex-1 font-bold uppercase tracking-widest text-[10px] transition-all flex items-center justify-center gap-3 ${activeTab === 'archive' ? 'bg-secondary text-on-secondary' : 'hover:bg-secondary/10 border-b border-secondary/20 md:border-b-0'}`}
           >
             <Database className="w-4 h-4" /> Artifacts_Archive
           </button>
           <button 
             onClick={() => setActiveTab('bridges')}
-            className={`flex-1 py-4 font-bold uppercase tracking-widest text-[10px] transition-all flex items-center justify-center gap-3 ${activeTab === 'bridges' ? 'bg-secondary text-on-secondary' : 'hover:bg-secondary/10'}`}
+            className={`py-4 md:flex-1 font-bold uppercase tracking-widest text-[10px] transition-all flex items-center justify-center gap-3 ${activeTab === 'bridges' ? 'bg-secondary text-on-secondary' : 'hover:bg-secondary/10'}`}
           >
             <LinkIcon className="w-4 h-4" /> Neural_Bridges
           </button>

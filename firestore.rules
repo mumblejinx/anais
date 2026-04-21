@@ -84,9 +84,14 @@ service cloud.firestore {
 
     function isValidArtifact(data) {
       return data.keys().hasAll(['type']) &&
-             data.type in ['book', 'key', 'pen', 'locked'] &&
-             (data.name == null || (data.name is string && data.name.size() <= 100)) &&
-             (data.imageUrl == null || (data.imageUrl is string && data.imageUrl.size() <= 2000));
+             data.type in [
+               'book', 'key', 'pen', 'locked', 
+               'movies', 'music', 'books', 'comics', 'artists', 'websites', 'locations', 'activities',
+               'musician', 'artist', 'website'
+             ] &&
+             (data.name == null || (data.name is string && data.name.size() <= 200)) &&
+             (data.imageUrl == null || (data.imageUrl is string && data.imageUrl.size() <= 2000)) &&
+             (data.createdAt == null || data.createdAt is timestamp);
     }
 
     function isValidSyncEntry(data) {
