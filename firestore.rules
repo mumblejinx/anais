@@ -143,7 +143,7 @@ service cloud.firestore {
 
       match /artifacts/{artifactId} {
         allow list: if isOwner(userId);
-        allow create: if isOwner(userId) && isValidArtifact(incoming());
+        allow create: if isOwner(userId);
       }
 
       match /sync_entries/{entryId} {
