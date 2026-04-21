@@ -11,6 +11,7 @@ export default defineConfig(({mode}) => {
   const geminiKey = process.env.GEMINI_API_KEY || env.GEMINI_API_KEY || '';
 
   return {
+    base: './',
     plugins: [react(), tailwindcss()],
     define: {
       'process.env.GEMINI_API_KEY': JSON.stringify(geminiKey),
