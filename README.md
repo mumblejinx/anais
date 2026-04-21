@@ -16,7 +16,23 @@ If you are moving this project from AI Studio or Localhost to GitHub, follow the
   git push -u origin main
   ```
 
-### 2. Environment Configuration (CRITICAL)
+### 2. Automated Builds (GitHub Actions)
+I have included a `.github/workflows/deploy.yml` file. Once you push this to GitHub:
+* Every time you push to the `main` branch, GitHub will automatically:
+  1. Install your project dependencies.
+  2. Build the project and create a `404.html` fallback.
+  3. **Deploy** the results to a new branch called `gh-pages`.
+
+#### **Final Activation (IMPORTANT)**:
+Even after the build succeeds, you must tell GitHub to host the site:
+1. Go to your GitHub Repository > **Settings** > **Pages**.
+2. Under **Build and deployment** > **Branch**:
+   * Select `gh-pages` branch.
+   * Select `/ (root)` folder.
+3. Click **Save**.
+4. Wait 1-2 minutes, and your site will be live at your URL.
+
+### 3. Environment Configuration (CRITICAL)
 For the Oracle and Seeker modules to function, you must provide a Gemini API Key.
 
 #### **For Local Run (from Clone):**
