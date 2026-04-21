@@ -218,10 +218,10 @@ export default function TheOracle() {
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="grid grid-cols-1 lg:grid-cols-12 gap-10 pb-32 h-[80vh]"
+      className="grid grid-cols-1 lg:grid-cols-12 gap-10 pb-32 lg:h-[80vh] h-auto"
     >
       {/* Left side: Neural Interaction */}
-      <section className="lg:col-span-8 flex flex-col gap-8 h-full">
+      <section className="lg:col-span-8 flex flex-col gap-8 lg:h-full h-auto min-h-[600px]">
         <div className="flex flex-col md:flex-row bg-surface-container-low border-b-4 border-primary shrink-0">
           <button 
             onClick={() => setActiveTab('dialogue')}
@@ -505,7 +505,7 @@ export default function TheOracle() {
       </section>
 
       {/* Right side: Matrix Controls */}
-      <aside className="lg:col-span-4 space-y-8 h-full overflow-y-auto custom-scrollbar pr-2">
+      <aside className="lg:col-span-4 space-y-8 lg:h-full h-auto lg:overflow-y-auto custom-scrollbar pr-2">
         <div className="bg-surface-container-high p-8 border-t-8 border-secondary relative overflow-hidden">
           <div className="absolute -top-12 -right-12 w-48 h-48 opacity-10 rotate-12">
             <AnaisAvatar variant="oracle" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCTDtuCc-_H3f86cYequ6xRHkoMLA1_vXXOnwmY9be9-RPcyGzqjmJcY7x-bi2tLM90j7kVNcPi-Mq1Vzo2RRxN-bt_Ggt2eAE1sbTeSdVwb8rJlZzpjvTreEQ8GqF8xXI-1JWxNlZn9Re-PDAyS6CV4UzT5emfVaZp64NxJ84zhDhiz_sfRj-r9S0YRwXQx1FQHmP5lHQfgD7ezKBkyMZ7ARFroOaRbvieG4yzsbLx2HEDayDasCt2TrTkboAiPfXb8Rvdoc6fG_ji" />
