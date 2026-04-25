@@ -7,7 +7,7 @@ const getAI = () => {
     (import.meta as any).env.VITE_GEMINI_API_KEY || 
     (import.meta as any).env.GEMINI_API_KEY ||
     process.env.VITE_GEMINI_API_KEY ||
-    'AIzaSyBvD4KdsktTFsOx8R5lacXUAajAkeghnpE';
+    '';
 
   if (!apiKey || apiKey === '' || apiKey === 'MISSING_KEY' || apiKey === 'MY_GEMINI_API_KEY') {
     throw new Error('Neural key missing: Please go to "Secrets" in the sidebar and add a secret named GEMINI_API_KEY with your key.');
