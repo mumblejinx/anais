@@ -1,0 +1,62 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Deny everything by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    match /users/{userId} {
+      // Profile
+      allow get: if request.auth.uid == userId;
+      allow create, update: if request.auth.uid == userId;
+
+      // All subcollections — only the owner can read/write
+      match /memories/{memoryId} {
+        allow read, create, update, delete: if request.auth.uid == userId;
+      }
+
+      match /artifacts/{artifactId} {
+        allow read, create, delete: if request.auth.uid == userId;
+      }
+
+      match /logs/{logId} {
+        allow read, create: if request.auth.uid == userId;
+      }
+
+      match /spatial_anchors/{anchorId} {
+        allow read, create, delete: if request.auth.uid == userId;
+      }
+
+      match /expedition_logs/{logId} {
+        allow read, create, delete: if request.auth.uid == userId;
+      }
+
+      match /neural_bridges/{bridgeId} {
+        allow read, create, delete: if request.auth.uid == userId;
+      }
+
+      match /recommendations/{recId} {
+        allow read, create, update, delete: if request.auth.uid == userId;
+      }
+
+      match /messages/{messageId} {
+        allow read, create, delete: if request.auth.uid == userId;
+      }
+
+      match /goals/{goalId} {
+        allow read, create, update, delete: if request.auth.uid == userId;
+      }
+
+      match /trajectory_history/{entryId} {
+        allow read, create, delete: if request.auth.uid == userId;
+      }
+
+      match /sync_entries/{entryId} {
+        allow read, create: if request.auth.uid == userId;
+      }
+    }
+  }
+}

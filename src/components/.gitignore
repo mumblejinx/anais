@@ -1,0 +1,27 @@
+# Archival Protocol: ANAIS_V4.0
+# Standard .gitignore for AI Studio to GitHub Migration
+
+# Artifacts
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Note: firebase-applet-config.json is included by default for app parity. 
+# If sharing publicly, remove it and follow setup guide in README.md.
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# System
+.DS_Store
+Thumbs.db
